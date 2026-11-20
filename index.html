@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111827">
+<title>HB Customs Quote Calculator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#111827;color:#f9fafb;font-family:Arial,sans-serif}
+.container{max-width:650px;margin:auto}
+header{text-align:center;padding:25px 10px;border-bottom:2px solid #2563eb;margin-bottom:22px}
+h1{margin:0;font-size:32px;letter-spacing:3px}
+header p{color:#60a5fa;letter-spacing:2px;font-size:12px}
+h2{font-size:17px;color:#60a5fa;margin-top:24px}
+label{display:block;margin:13px 0 6px;color:#d1d5db;font-size:13px}
+input,textarea{width:100%;padding:12px;border:1px solid #374151;border-radius:7px;background:#1f2937;color:white;font-size:16px}
+textarea{min-height:75px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{width:100%;padding:14px;margin-top:16px;border:0;border-radius:8px;background:#2563eb;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+.secondary{background:#374151}
+.result{background:#1f2937;border:1px solid #374151;padding:18px;border-radius:10px;margin-top:22px}
+.total{font-size:30px;color:#60a5fa;font-weight:bold}
+.profit{color:#4ade80;font-size:22px;font-weight:bold}
+small{color:#9ca3af}
+footer{text-align:center;color:#9ca3af;padding:25px 0;font-size:12px}
+@media(max-width:450px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>HB CUSTOMS</h1>
+<p>BRAKES • STEERING • SUSPENSION</p>
+<small>REPAIR QUOTE CALCULATOR</small>
+</header>
+
+<h2>Customer Information</h2>
+<label>Customer Name</label>
+<input id="customer" placeholder="Customer name">
+<label>Phone Number</label>
+<input id="phone" placeholder="Phone number">
+
+<h2>Vehicle Information</h2>
+<div class="grid">
+<div><label>Year</label><input id="year" placeholder="2020"></div>
+<div><label>Make</label><input id="make" placeholder="Ram"></div>
+</div>
+<label>Model</label>
+<input id="model" placeholder="3500">
+
+<h2>Repair Information</h2>
+<label>Type of Repair</label>
+<input id="repair" placeholder="Brake and suspension repair">
+<label>Additional Details</label>
+<textarea id="details" placeholder="Describe the work required"></textarea>
+
+<h2>Parts & Labor</h2>
+<div class="grid">
+<div><label>Parts Cost ($)</label><input type="number" id="parts" value="0" min="0" step=".01"></div>
+<div><label>Parts Markup (%)</label><input type="number" id="markup" value="30" min="0"></div>
+<div><label>Labor Hours</label><input type="number" id="hours" value="1" min="0" step=".25"></div>
+<div><label>Labor Rate ($/hr)</label><input type="number" id="rate" value="85" min="0" step=".01"></div>
+<div><label>Your Labor Cost ($/hr)</label><input type="number" id="laborCost" value="0" min="0" step=".01"></div>
+<div><label>Shop Supplies ($)</label><input type="number" id="supplies" value="0" min="0" step=".01"></div>
+</div>
+
+<h2>Tax</h2>
+<label>Sales Tax Rate (%)</label>
+<input type="number" id="tax" value="0" min="0" step=".01">
+
+<button onclick="calculate()">Calculate Quote</button>
+
+<div class="result" id="result" aria-live="polite">
+<h2>Customer Estimate</h2>
+<p>Enter your job details and calculate your quote.</p>
+</div>
+
+<button class="secondary" onclick="copyQuote()">Copy Customer Quote</button>
+<button class="secondary" onclick="window.print()">Print Quote</button>
+
+<footer>HB CUSTOMS<br>Professional Automotive Repair Estimates</footer>
+</div>
+
+<script>
+let latestQuote="";
+
+function money(value){
+return "$"+value.toFixed(2);
+}
+
+function calculate(){
+const get=id=>Number(document.getElementById(id).value)||0;
+
+const parts=get("parts");
+const markup=get("markup");
+const hours=get("hours");
+const rate=get("rate");
+const laborCost=get("laborCost");
+const supplies=get("supplies");
+const taxRate=get("tax");
+
+if([parts,markup,hours,rate,laborCost,supplies,taxRate].some(v=>v<0)){
+alert("Please enter non-negative amounts.");
+return;
+}
+
+const partsPrice=parts*(1+markup/100);
+const laborPrice=hours*rate;
+const subtotal=partsPrice+laborPrice+supplies;
+const taxAmount=subtotal*taxRate/100;
+const total=subtotal+taxAmount;
+const estimatedProfit=partsPrice-parts+laborPrice-hours*laborCost;
+
+const customer=document.getElementById("customer").value;
+const phone=document.getElementById("phone").value;
+const vehicle=[
+document.getElementById("year").value,
+document.getElementById("make").value,
+document.getElementById("model").value
+].filter(Boolean).join(" ");
+
+const repair=document.getElementById("repair").value;
+const details=document.getElementById("details").value;
+
+latestQuote=[
+"HB CUSTOMS",
+"REPAIR ESTIMATE",
+"------------------------",
+"Customer: "+customer,
+"Phone: "+phone,
+"Vehicle: "+vehicle,
+"Repair: "+repair,
+"Details: "+details,
+"------------------------",
+"Parts: "+money(partsPrice),
+"Labor: "+money(laborPrice),
+"Shop Supplies: "+money(supplies),
+"Subtotal: "+money(subtotal),
+"Tax: "+money(taxAmount),
+"TOTAL: "+money(total),
+"------------------------",
+"Thank you for choosing HB Customs!"
+].join("\n");
+
+document.getElementById("result").innerHTML=`
+<h2>Customer Estimate</h2>
+<p>Parts: ${money(partsPrice)}</p>
+<p>Labor: ${money(laborPrice)}</p>
+<p>Shop Supplies: ${money(supplies)}</p>
+<p>Subtotal: ${money(subtotal)}</p>
+<p>Sales Tax: ${money(taxAmount)}</p>
+<hr>
+<p>Total Customer Quote</p>
+<div class="total">${money(total)}</div>
+<hr>
+<p>Estimated Profit Before Overhead</p>
+<div class="profit">${money(estimatedProfit)}</div>
+<small>After parts cost and entered direct labor cost.
+Excludes other business expenses and income taxes.</small>`;
+}
+
+function copyQuote(){
+if(!latestQuote){
+alert("Calculate a quote first.");
+return;
+}
+if(navigator.clipboard&&window.isSecureContext){
+navigator.clipboard.writeText(latestQuote)
+.then(()=>alert("Quote copied!"))
+.catch(()=>fallbackCopy());
+}else{
+fallbackCopy();
+}
+}
+
+function fallbackCopy(){
+const box=document.createElement("textarea");
+box.value=latestQuote;
+document.body.appendChild(box);
+box.select();
+document.execCommand("copy");
+box.remove();
+alert("Quote copied!");
+}
+</script>
+</body>
+</html>
